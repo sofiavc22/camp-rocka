@@ -1,0 +1,29 @@
+---
+import BaseLayout from "../layouts/BaseLayout.astro";
+---
+<BaseLayout title="Reserva recibida | Camp Rocka" description="Tu pago fue recibido. Coordinaremos por WhatsApp la entrega y recolección de tu equipo Camp Rocka." canonical="/gracias">
+  <main class="successPage">
+    <section>
+      <span class="successIcon" aria-hidden="true">✓</span>
+      <span class="eyebrow">Pago completado</span>
+      <h1>Tu aventura ya está en camino.</h1>
+      <p>Recibimos tu reservación. Te enviaremos un mensaje de WhatsApp al número registrado en Stripe para coordinar la entrega del equipo uno o dos días antes de tu campamento y la recolección en el mismo domicilio.</p>
+      <div class="successNote">
+        <b>Recuerda el depósito de garantía</b>
+        <span>El día de la entrega se solicitarán $999 MXN en efectivo o con tarjeta. Se devuelve cuando recogemos el equipo completo y en las condiciones acordadas.</span>
+      </div>
+      <a class="primary" href="/">Volver al inicio</a>
+    </section>
+  </main>
+</BaseLayout>
+<style>
+  .successPage{min-height:72vh;display:grid;place-items:center;padding:80px 24px;background:#f7f6f1}
+  .successPage section{max-width:760px;text-align:center;background:white;border:1px solid #dedfd8;border-radius:28px;padding:56px;box-shadow:0 20px 55px rgba(24,55,45,.08)}
+  .successIcon{display:grid;place-items:center;width:64px;height:64px;margin:0 auto 24px;border-radius:50%;background:#18372d;color:#f2b62f;font-size:34px;font-weight:800}
+  h1{font-size:clamp(42px,6vw,72px);line-height:.98;margin:14px 0 24px;color:#18372d}
+  p{font-size:19px;line-height:1.7;color:#5d6f68}
+  .successNote{display:grid;gap:8px;text-align:left;background:#edf2e8;border-radius:18px;padding:22px;margin:28px 0}
+  .successNote b{color:#18372d}.successNote span{line-height:1.55;color:#52645d}
+  .primary{display:inline-flex}
+  @media(max-width:600px){.successPage section{padding:36px 24px}.successPage{padding:40px 16px}}
+</style>
