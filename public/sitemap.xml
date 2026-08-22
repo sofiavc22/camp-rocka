@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
+<url><loc>https://camprocka.online/</loc><priority>1.0</priority><changefreq>weekly</changefreq></url>
+<url><loc>https://camprocka.online/reservar</loc><priority>0.95</priority><changefreq>weekly</changefreq></url>
+<url><loc>https://camprocka.online/servicios</loc><priority>0.9</priority><changefreq>monthly</changefreq></url>
+<url><loc>https://camprocka.online/ubicaciones</loc><priority>0.9</priority><changefreq>monthly</changefreq></url>
+<url><loc>https://camprocka.online/cdmx</loc><priority>0.85</priority><changefreq>monthly</changefreq></url>
+<url><loc>https://camprocka.online/edomex</loc><priority>0.85</priority><changefreq>monthly</changefreq></url>
+<url><loc>https://camprocka.online/pachuca</loc><priority>0.85</priority><changefreq>monthly</changefreq></url>
+<url><loc>https://camprocka.online/blog</loc><priority>0.75</priority><changefreq>weekly</changefreq></url>
+<url><loc>https://camprocka.online/blog/renta-equipo-camping-cdmx</loc><priority>0.7</priority><changefreq>monthly</changefreq></url>
+<url><loc>https://camprocka.online/blog/precios-renta-equipo-acampar</loc><priority>0.7</priority><changefreq>monthly</changefreq></url>
+<url><loc>https://camprocka.online/blog/renta-casa-campana-4-personas</loc><priority>0.7</priority><changefreq>monthly</changefreq></url>
+<url><loc>https://camprocka.online/blog/renta-camping-fin-de-semana</loc><priority>0.7</priority><changefreq>monthly</changefreq></url>
+<url><loc>https://camprocka.online/blog/renta-equipo-camping-pachuca</loc><priority>0.7</priority><changefreq>monthly</changefreq></url>
+<url><loc>https://camprocka.online/contacto</loc><priority>0.6</priority><changefreq>monthly</changefreq></url>
+<url><loc>https://camprocka.online/nosotros</loc><priority>0.5</priority><changefreq>yearly</changefreq></url>
+</urlset>

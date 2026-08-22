@@ -1,0 +1,42 @@
+---
+import BaseLayout from "../layouts/BaseLayout.astro";
+import Home from "../react-pages/page";
+import Servicios from "../react-pages/servicios/page";
+import Ubicaciones from "../react-pages/ubicaciones/page";
+import Nosotros from "../react-pages/nosotros/page";
+import Contacto from "../react-pages/contacto/page";
+import Reservar from "../react-pages/reservar/page";
+import CDMX from "../react-pages/cdmx/page";
+import EDOMEX from "../react-pages/edomex/page";
+import Pachuca from "../react-pages/pachuca/page";
+import Blog from "../react-pages/blog/page";
+import BlogCDMX from "../react-pages/blog/renta-equipo-camping-cdmx/page";
+import BlogPrecios from "../react-pages/blog/precios-renta-equipo-acampar/page";
+import BlogCasa from "../react-pages/blog/renta-casa-campana-4-personas/page";
+import BlogFin from "../react-pages/blog/renta-camping-fin-de-semana/page";
+import BlogPachuca from "../react-pages/blog/renta-equipo-camping-pachuca/page";
+import {routeData} from "../routes";
+
+const routes={
+  "":{Component:Home,title:"Renta de Equipo para Acampar | Camp Rocka",description:"Renta equipo de camping completo con entrega en CDMX, Estado de México y Pachuca."},
+  servicios:{Component:Servicios,title:"Renta de equipo para acampar | Paquete Camp Rocka",description:"Paquete con casa de campaña, sillas, lámparas, hielera, colchón y botiquín con entrega a domicilio."},
+  ubicaciones:{Component:Ubicaciones,title:"Renta de equipo de camping con entrega | CDMX, EDOMEX y Pachuca",description:"Entrega coordinada de equipo para acampar en CDMX, Estado de México y Pachuca."},
+  nosotros:{Component:Nosotros,title:"Nosotros | Camp Rocka",description:"Conoce cómo Camp Rocka hace más fácil rentar equipo confiable para acampar."},
+  contacto:{Component:Contacto,title:"Cotiza renta de equipo para acampar | Camp Rocka",description:"Consulta disponibilidad y cobertura de renta de equipo de camping."},
+  reservar:{Component:Reservar,title:"Reserva equipo de camping desde $1,999 | Camp Rocka",description:"Selecciona las fechas y calcula el total de tu renta con IVA incluido.",hydrate:true},
+  cdmx:{Component:CDMX,title:"Renta de equipo para acampar en CDMX | Camp Rocka",description:"Paquete de camping para hasta cuatro personas con entrega y recolección a domicilio en CDMX."},
+  edomex:{Component:EDOMEX,title:"Renta de equipo para acampar en Estado de México | Camp Rocka",description:"Paquete de camping con entrega y recolección en municipios seleccionados del Estado de México."},
+  pachuca:{Component:Pachuca,title:"Renta de equipo para acampar en Pachuca | Camp Rocka",description:"Renta equipo de camping en Pachuca con entrega anticipada y recolección en el mismo domicilio."},
+  blog:{Component:Blog,title:"Guías para rentar equipo de camping | Camp Rocka",description:"Precios, paquetes y consejos para rentar equipo de camping en CDMX, Estado de México y Pachuca."},
+  "blog/renta-equipo-camping-cdmx":{Component:BlogCDMX,title:"Renta de equipo de camping en CDMX con entrega | Camp Rocka",description:"Conoce cuánto cuesta rentar un paquete completo en CDMX y cómo recibirlo en tu domicilio."},
+  "blog/precios-renta-equipo-acampar":{Component:BlogPrecios,title:"Precios de renta de equipo para acampar | Camp Rocka",description:"Consulta precios por noche, depósito y costos para rentar un paquete de camping."},
+  "blog/renta-casa-campana-4-personas":{Component:BlogCasa,title:"Renta de casa de campaña para 4 personas | Camp Rocka",description:"Guía para rentar una tienda para cuatro personas dentro de un paquete completo."},
+  "blog/renta-camping-fin-de-semana":{Component:BlogFin,title:"Renta de equipo de camping por fin de semana | Camp Rocka",description:"Calcula un paquete de camping para dos o tres noches con entrega anticipada."},
+  "blog/renta-equipo-camping-pachuca":{Component:BlogPachuca,title:"Dónde rentar equipo de camping en Pachuca | Camp Rocka",description:"Renta un paquete de camping en Pachuca antes de salir hacia destinos cercanos."}
+};
+export function getStaticPaths(){return Object.entries(routeData).map(([path,props])=>({params:{path:path||undefined},props:{path,...props}}));}
+const {path,title,description,hydrate}=Astro.props;
+const Component=routes[path].Component;
+const canonical=path?`/${path}`:"/";
+---
+<BaseLayout title={title} description={description} canonical={canonical}>{hydrate?<Component client:load/>:<Component/>}</BaseLayout>
