@@ -82,6 +82,43 @@ function confirmationEmail(session) {
 </body></html>`;
 }
 
+function supabaseHeaders() {
+  const key = process.env.SUPABASE_SERVICE_ROLE_KEY;
+  return {
+    apikey: key,
+    Authorization: `Bearer ${key}`,
+    "Content-Type": "application/json",
+    Prefer: "return=minimal"
+  };
+}
+
+async function confirmReservation(session) {
+  const reservationId = session.metadata?.reservation_id;
+  if (!reservationId) return;
+
+  const field = session.custom_fields?.find((item) => item.key === "delivery_area");
+  const deliveryArea = field?.dropdown?.value || null;
+  const response = await fetch(
+    `${process.env.SUPABASE_URL}/rest/v1/reservations?id=eq.${encodeURIComponent(reservationId)}`,
+    {
+      method: "PATCH",
+      headers: supabaseHeaders(),
+      body: JSON.stringify({
+        status: "paid",
+        paid_at: new Date().toISOString(),
+        updated_at: new Date().toISOString(),
+        stripe_checkout_session_id: session.id,
+        customer_name: session.customer_details?.name || null,
+        customer_email: session.customer_details?.email || session.customer_email || null,
+        customer_phone: session.customer_details?.phone || null,
+        delivery_area: deliveryArea,
+        total_mxn: Math.round((session.amount_total || 0) / 100)
+      })
+    }
+  );
+  if (!response.ok) throw new Error(`Supabase confirmation failed: ${await response.text()}`);
+}
+
 async function sendConfirmation(session, eventId) {
   const email = session.customer_details?.email || session.customer_email;
   if (!email) throw new Error("Checkout session has no customer email");
@@ -106,7 +143,7 @@ async function sendConfirmation(session, eventId) {
 
 export default async function handler(request, response) {
   if (request.method !== "POST") return response.status(405).json({ error: "Método no permitido" });
-  if (!process.env.STRIPE_WEBHOOK_SECRET || !process.env.RESEND_API_KEY) {
+  if (!process.env.STRIPE_WEBHOOK_SECRET || !process.env.RESEND_API_KEY || !process.env.SUPABASE_URL || !process.env.SUPABASE_SERVICE_ROLE_KEY) {
     return response.status(503).json({ error: "Webhook no configurado" });
   }
 
@@ -118,6 +155,7 @@ export default async function handler(request, response) {
   const event = JSON.parse(rawBody.toString("utf8"));
   if (event.type === "checkout.session.completed" && event.data?.object?.payment_status === "paid") {
     try {
+      await confirmReservation(event.data.object);
       await sendConfirmation(event.data.object, event.id);
     } catch (error) {
       console.error("Confirmation email failed", error);
