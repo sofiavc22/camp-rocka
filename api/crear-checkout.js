@@ -8,14 +8,52 @@ function parseDate(value) {
   return Number.isNaN(date.getTime()) ? null : date;
 }
 
+function supabaseHeaders(prefer) {
+  const key = process.env.SUPABASE_SERVICE_ROLE_KEY;
+  return {
+    apikey: key,
+    Authorization: `Bearer ${key}`,
+    "Content-Type": "application/json",
+    ...(prefer ? { Prefer: prefer } : {})
+  };
+}
+
+async function createHold(startDate, endDate) {
+  const response = await fetch(`${process.env.SUPABASE_URL}/rest/v1/rpc/create_reservation_hold`, {
+    method: "POST",
+    headers: supabaseHeaders(),
+    body: JSON.stringify({ p_start_date: startDate, p_end_date: endDate })
+  });
+  const result = await response.json();
+  if (!response.ok) {
+    const message = result?.message || "";
+    if (message.includes("DATES_UNAVAILABLE")) {
+      const error = new Error("DATES_UNAVAILABLE");
+      error.code = "DATES_UNAVAILABLE";
+      throw error;
+    }
+    throw new Error(`Supabase hold failed: ${message}`);
+  }
+  return result;
+}
+
+async function updateReservation(id, values) {
+  const response = await fetch(`${process.env.SUPABASE_URL}/rest/v1/reservations?id=eq.${encodeURIComponent(id)}`, {
+    method: "PATCH",
+    headers: supabaseHeaders("return=minimal"),
+    body: JSON.stringify({ ...values, updated_at: new Date().toISOString() })
+  });
+  if (!response.ok) throw new Error(`Supabase update failed: ${await response.text()}`);
+}
+
 export default async function handler(request, response) {
   if (request.method !== "POST") {
     response.setHeader("Allow", "POST");
     return response.status(405).json({ error: "Método no permitido." });
   }
 
-  if (!process.env.STRIPE_SECRET_KEY) {
-    return response.status(503).json({ error: "El pago todavía no está configurado. Inténtalo más tarde." });
+  if (!process.env.STRIPE_SECRET_KEY || !process.env.SUPABASE_URL || !process.env.SUPABASE_SERVICE_ROLE_KEY) {
+    return response.status(503).json({ error: "La reservación todavía no está configurada. Inténtalo más tarde." });
   }
 
   const startDate = parseDate(request.body?.startDate);
@@ -27,6 +65,19 @@ export default async function handler(request, response) {
     return response.status(400).json({ error: `La estancia debe ser de 1 a ${MAX_NIGHTS} noches.` });
   }
 
+  let hold;
+  try {
+    hold = await createHold(request.body.startDate, request.body.endDate);
+  } catch (error) {
+    if (error.code === "DATES_UNAVAILABLE") {
+      return response.status(409).json({
+        error: "Ya tenemos tres servicios activos durante una o más de esas noches. Elige otras fechas."
+      });
+    }
+    console.error("Reservation hold failed", error);
+    return response.status(500).json({ error: "No pudimos comprobar la disponibilidad. Inténtalo nuevamente." });
+  }
+
   const totalMxn = FIRST_NIGHT_MXN + Math.max(0, nights - 1) * EXTRA_NIGHT_MXN;
   const siteUrl = process.env.SITE_URL || "https://camprocka.online";
   const displayDate = (value) => value.split("-").reverse().join("/");
@@ -35,6 +86,7 @@ export default async function handler(request, response) {
   const params = new URLSearchParams();
   params.set("mode", "payment");
   params.set("locale", "es-419");
+  params.set("expires_at", String(Math.floor(Date.now() / 1000) + 30 * 60));
   params.set("success_url", `${siteUrl}/gracias?session_id={CHECKOUT_SESSION_ID}`);
   params.set("cancel_url", `${siteUrl}/reservar?fecha=${request.body.startDate}&salida=${request.body.endDate}`);
   params.set("phone_number_collection[enabled]", "true");
@@ -56,11 +108,16 @@ export default async function handler(request, response) {
   params.set("line_items[0][price_data][unit_amount]", String(totalMxn * 100));
   params.set("line_items[0][price_data][product_data][name]", "Renta paquete básico Camp Rocka");
   params.set("line_items[0][price_data][product_data][description]", description);
+  params.set("metadata[reservation_id]", hold.id);
+  params.set("metadata[hold_token]", hold.hold_token);
   params.set("metadata[start_date]", request.body.startDate);
   params.set("metadata[end_date]", request.body.endDate);
   params.set("metadata[nights]", String(nights));
   params.set("metadata[total_mxn]", String(totalMxn));
   params.set("payment_intent_data[description]", `Camp Rocka · ${description}`);
+  params.set("payment_intent_data[metadata][reservation_id]", hold.id);
+  params.set("payment_intent_data[metadata][start_date]", request.body.startDate);
+  params.set("payment_intent_data[metadata][end_date]", request.body.endDate);
 
   try {
     const stripeResponse = await fetch("https://api.stripe.com/v1/checkout/sessions", {
@@ -73,11 +130,15 @@ export default async function handler(request, response) {
     });
     const session = await stripeResponse.json();
     if (!stripeResponse.ok) {
+      await updateReservation(hold.id, { status: "cancelled" }).catch(console.error);
       console.error("Stripe Checkout error", session?.error?.message);
-      return response.status(502).json({ error: "Stripe no pudo iniciar el pago. Revisa la configuración e inténtalo nuevamente." });
+      return response.status(502).json({ error: "Stripe no pudo iniciar el pago. Inténtalo nuevamente." });
     }
+
+    await updateReservation(hold.id, { stripe_checkout_session_id: session.id });
     return response.status(200).json({ url: session.url });
   } catch (error) {
+    await updateReservation(hold.id, { status: "cancelled" }).catch(console.error);
     console.error("Checkout request failed", error);
     return response.status(500).json({ error: "No pudimos conectar con Stripe. Inténtalo nuevamente." });
   }
