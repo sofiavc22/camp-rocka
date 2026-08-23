@@ -29,16 +29,18 @@ export default async function handler(request, response) {
 
   const totalMxn = FIRST_NIGHT_MXN + Math.max(0, nights - 1) * EXTRA_NIGHT_MXN;
   const siteUrl = process.env.SITE_URL || "https://camprocka.online";
-  const description = `${nights} ${nights === 1 ? "noche" : "noches"} · ${request.body.startDate} al ${request.body.endDate} · IVA incluido. Incluye casa de campaña para hasta 4 personas, 2 sillas, 2 lámparas, hielera, colchón inflable y botiquín. Entrega 1 o 2 días antes y recolección en el mismo domicilio. Depósito reembolsable de $999 MXN requerido el día de la entrega.`;
+  const displayDate = (value) => value.split("-").reverse().join("/");
+  const description = `${nights} ${nights === 1 ? "noche" : "noches"} · ${displayDate(request.body.startDate)} al ${displayDate(request.body.endDate)} · IVA incluido. Incluye casa de campaña para 4 personas, 2 sillas, 2 lámparas, hielera, colchón y botiquín.`;
 
   const params = new URLSearchParams();
   params.set("mode", "payment");
-  params.set("locale", "es");
+  params.set("locale", "es-419");
   params.set("success_url", `${siteUrl}/gracias?session_id={CHECKOUT_SESSION_ID}`);
   params.set("cancel_url", `${siteUrl}/reservar?fecha=${request.body.startDate}&salida=${request.body.endDate}`);
   params.set("phone_number_collection[enabled]", "true");
   params.set("billing_address_collection", "required");
   params.set("submit_type", "book");
+  params.set("custom_text[submit][message]", "Después del pago te contactaremos por WhatsApp para coordinar la entrega y recolección. El depósito reembolsable de $999 MXN se solicita hasta el día de la entrega.");
   params.set("line_items[0][quantity]", "1");
   params.set("line_items[0][price_data][currency]", "mxn");
   params.set("line_items[0][price_data][unit_amount]", String(totalMxn * 100));
