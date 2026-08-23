@@ -29,7 +29,7 @@ export default async function handler(request, response) {
 
   const totalMxn = FIRST_NIGHT_MXN + Math.max(0, nights - 1) * EXTRA_NIGHT_MXN;
   const siteUrl = process.env.SITE_URL || "https://camprocka.online";
-  const description = `${nights} ${nights === 1 ? "noche" : "noches"} · ${request.body.startDate} al ${request.body.endDate} · IVA incluido`;
+  const description = `${nights} ${nights === 1 ? "noche" : "noches"} · ${request.body.startDate} al ${request.body.endDate} · IVA incluido. Incluye casa de campaña para hasta 4 personas, 2 sillas, 2 lámparas, hielera, colchón inflable y botiquín. Entrega 1 o 2 días antes y recolección en el mismo domicilio. Depósito reembolsable de $999 MXN requerido el día de la entrega.`;
 
   const params = new URLSearchParams();
   params.set("mode", "payment");
