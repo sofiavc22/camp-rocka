@@ -53,13 +53,16 @@ function confirmationEmail(session) {
   return `<!doctype html>
 <html lang="es"><body style="margin:0;background:#f5f4ef;font-family:Arial,sans-serif;color:#18372d">
   <div style="max-width:640px;margin:0 auto;padding:32px 18px">
-    <div style="background:#18372d;border-radius:22px 22px 0 0;padding:28px;text-align:center">
-      <img src="https://camprocka.online/camp-rocka-logo.webp" alt="Camp Rocka" width="92" style="display:block;margin:0 auto">
+    <div style="background:#18372d;border-radius:22px 22px 0 0;padding:32px 28px;text-align:center">
+      <div style="font-family:Arial,sans-serif;font-size:28px;font-weight:900;letter-spacing:1px;line-height:1">
+        <span style="color:#f2b62f">CAMP</span> <span style="color:#ffffff">ROCKA</span>
+      </div>
+      <div style="color:#cbd9d2;font-size:12px;letter-spacing:2px;text-transform:uppercase;margin-top:9px">Todo para acampar</div>
     </div>
     <div style="background:#fff;padding:38px 34px;border-radius:0 0 22px 22px">
       <p style="margin:0 0 8px;color:#b77b00;font-weight:bold;text-transform:uppercase;font-size:12px;letter-spacing:1.5px">Reservación confirmada</p>
       <h1 style="font-size:32px;line-height:1.1;margin:0 0 18px">Tu aventura ya está confirmada.</h1>
-      <p style="font-size:17px;line-height:1.6;color:#53665f">Hola, ${name}. Recibimos correctamente tu pago. Te contactaremos por WhatsApp para confirmar el domicilio y coordinar la entrega y recolección.</p>
+      <p style="font-size:17px;line-height:1.6;color:#53665f">Hola, ${name}. Recibimos correctamente tu pago. Te contactaremos por WhatsApp hasta 48 horas antes de la entrega para que nos compartas la dirección exacta y coordinemos el horario. Al finalizar tu campamento, recogeremos el equipo en ese mismo domicilio.</p>
       <div style="background:#edf2e8;border-radius:16px;padding:22px;margin:26px 0">
         <table role="presentation" width="100%" style="border-collapse:collapse;font-size:15px">
           <tr><td style="padding:8px 0;color:#64756f">Campamento</td><td align="right" style="font-weight:bold">${start} al ${end}</td></tr>
