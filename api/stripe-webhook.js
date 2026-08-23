@@ -119,6 +119,45 @@ async function confirmReservation(session) {
   if (!response.ok) throw new Error(`Supabase confirmation failed: ${await response.text()}`);
 }
 
+async function keepReservationPending(session) {
+  const reservationId = session.metadata?.reservation_id;
+  if (!reservationId) return;
+
+  const pendingUntil = new Date(Date.now() + 72 * 60 * 60 * 1000).toISOString();
+  const response = await fetch(
+    `${process.env.SUPABASE_URL}/rest/v1/reservations?id=eq.${encodeURIComponent(reservationId)}`,
+    {
+      method: "PATCH",
+      headers: supabaseHeaders(),
+      body: JSON.stringify({
+        status: "holding",
+        hold_expires_at: pendingUntil,
+        updated_at: new Date().toISOString(),
+        stripe_checkout_session_id: session.id
+      })
+    }
+  );
+  if (!response.ok) throw new Error(`Supabase pending update failed: ${await response.text()}`);
+}
+
+async function cancelPendingReservation(session) {
+  const reservationId = session.metadata?.reservation_id;
+  if (!reservationId) return;
+
+  const response = await fetch(
+    `${process.env.SUPABASE_URL}/rest/v1/reservations?id=eq.${encodeURIComponent(reservationId)}&status=eq.holding`,
+    {
+      method: "PATCH",
+      headers: supabaseHeaders(),
+      body: JSON.stringify({
+        status: "cancelled",
+        updated_at: new Date().toISOString()
+      })
+    }
+  );
+  if (!response.ok) throw new Error(`Supabase cancellation failed: ${await response.text()}`);
+}
+
 async function sendConfirmation(session, eventId) {
   const email = session.customer_details?.email || session.customer_email;
   if (!email) throw new Error("Checkout session has no customer email");
@@ -158,14 +197,34 @@ export default async function handler(request, response) {
   }
 
   const event = JSON.parse(rawBody.toString("utf8"));
-  if (event.type === "checkout.session.completed" && event.data?.object?.payment_status === "paid") {
-    try {
-      await confirmReservation(event.data.object);
-      await sendConfirmation(event.data.object, event.id);
-    } catch (error) {
-      console.error("Confirmation email failed", error);
-      return response.status(500).json({ error: "No se pudo enviar el correo" });
+  const session = event.data?.object;
+
+  try {
+    if (event.type === "checkout.session.completed") {
+      if (session?.payment_status === "paid") {
+        await confirmReservation(session);
+        await sendConfirmation(session, event.id);
+      } else {
+        // OXXO genera el comprobante primero y confirma el pago después.
+        // Conservamos la disponibilidad mientras el cliente realiza el pago.
+        await keepReservationPending(session);
+      }
     }
+
+    if (event.type === "checkout.session.async_payment_succeeded") {
+      await confirmReservation(session);
+      await sendConfirmation(session, event.id);
+    }
+
+    if (
+      event.type === "checkout.session.async_payment_failed" ||
+      event.type === "checkout.session.expired"
+    ) {
+      await cancelPendingReservation(session);
+    }
+  } catch (error) {
+    console.error("Stripe webhook processing failed", error);
+    return response.status(500).json({ error: "No se pudo procesar el evento de Stripe" });
   }
 
   return response.status(200).json({ received: true });
