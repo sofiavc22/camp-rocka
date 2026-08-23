@@ -123,6 +123,16 @@ async function sendConfirmation(session, eventId) {
   const email = session.customer_details?.email || session.customer_email;
   if (!email) throw new Error("Checkout session has no customer email");
 
+  const message = {
+    from: "Camp Rocka <reservas@camprocka.online>",
+    to: [email],
+    subject: "Tu reservación Camp Rocka está confirmada",
+    html: confirmationEmail(session)
+  };
+  if (process.env.RESERVATIONS_EMAIL) {
+    message.bcc = [process.env.RESERVATIONS_EMAIL];
+  }
+
   const response = await fetch("https://api.resend.com/emails", {
     method: "POST",
     headers: {
@@ -130,12 +140,7 @@ async function sendConfirmation(session, eventId) {
       "Content-Type": "application/json",
       "Idempotency-Key": `stripe-${eventId}`
     },
-    body: JSON.stringify({
-      from: "Camp Rocka <reservas@camprocka.online>",
-      to: [email],
-      subject: "Tu reservación Camp Rocka está confirmada",
-      html: confirmationEmail(session)
-    })
+    body: JSON.stringify(message)
   });
   const result = await response.json();
   if (!response.ok) throw new Error(result?.message || "Resend rejected the email");
